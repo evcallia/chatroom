@@ -1,0 +1,81 @@
+<html>
+<head>
+<title></title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script type ="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script type ="text/javascript">
+        $(document).ready(function (){
+            function updateScroll(){
+                var d = $('#conversation_board');
+                d.scrollTop(d.prop("scrollHeight"));
+            }
+            // this triggers the connection event in our server!
+            var socket = io.connect();
+            // we'll write all the socket stuff after the above line!
+            var name = prompt('What is your name?')
+            if (name != null){
+                socket.emit('new_user', {name:name});
+            }
+
+            //message sent
+            $('form').submit(function (e){
+                e.preventDefault();
+                var message = $('#message').val();
+                if(message != ''){
+                    socket.emit("send_clicked", {message: message});
+                    $('#message').val('');
+                }
+            });
+
+            //message recieved
+            socket.on('new_message', function (data){
+                var all = $('#conversation_board').html();
+                all += `<p>${data.user}:\t${data.message}</p>`
+                $('#conversation_board').html(all);
+                updateScroll();
+            });
+
+            socket.on('all_messages', function (data){
+                var all = ''
+                console.log(data);
+                for (var i = 0; i < data.messages.length; i++) {
+                    all += `<p>${data.messages[i].name}:\t${data.messages[i].message}</p>`
+                }
+                $('#conversation_board').html(all);
+                updateScroll();
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <br>
+        <h3>Conversation Board</h3>
+        <div id="conversation_board"></div><br>
+        <form>
+            <input type="text" name="message" id='message' placeholder="Enter message here"><br><br>
+            <input type="submit" name="name" value="Send">
+            <!-- <button type="button" name="send" id="send">Send</button> -->
+        </form>
+    </div>
+    <style media="screen">
+        #conversation_board{
+            width: 100%;
+            max-width: 600px;
+            height: 100%;
+            max-height: 600px;
+            overflow-y: auto;
+            border: 2px solid black;
+            padding: 15px;
+        }
+        .container{
+            width: 75%;
+            margin: auto;
+        }
+        input[type='text']{
+            width: 100%;
+            max-width: 600px;
+        }
+    </style>
+</body>
+</html>
